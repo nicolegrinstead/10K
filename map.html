@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<style type="text/css">
+  html { height: 100% }
+  body { height: 100%; margin: 0; padding: 0 }
+  #map_canvas { width:75%; height: 100%; float:left; }
+  #options { width: 25%; height: 100%; float: right;}
+</style>
+<script type="text/javascript"
+    src="http://maps.googleapis.com/maps/api/js?sensor=false">
+</script>
+<script type="text/javascript">
+  var geocoder;
+  var map;
+  function initialize() {
+    geocoder = new google.maps.Geocoder();
+    var latlng = new google.maps.LatLng(38, -97);
+    var myOptions = {
+      zoom: 4,
+      center: latlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    }
+    map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+        google.maps.event.addListener(map, 'click', function(event) {
+            mapZoom = map.getZoom();
+            startLocation = event.latLng;
+            placeMarker(event.latLng);
+            //setTimeout("placeMarker()", 500);
+        });
+  }
+
+  function codeAddress() {
+    var address = document.getElementById("address").value;
+    geocoder.geocode( { 'address': address}, function(results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        map.setCenter(results[0].geometry.location);
+        var marker = new google.maps.Marker({
+            map: map,
+            position: results[0].geometry.location
+        });
+
+      } else {
+        alert("Geocode was not successful for the following reason: " + status);
+      }
+    });
+  }
+
+  function placeMarker(latLng) {
+    if(mapZoom == map.getZoom()){
+      var marker = new google.maps.Marker({
+        position: latLng,
+        map: map
+      });
+    }
+}
+</script>
+</head>
+<body onload="initialize()">
+  <div id="map_canvas"></div>
+  <div id="options">
+    <input id="address" type="textbox" value="Sydney, NSW">
+    <input type="button" value="Jump to address" onclick="codeAddress()">
+  </div>
+</body>
+</html>
