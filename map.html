@@ -9,8 +9,7 @@
   #options { width: 25%; height: 100%; float: right;}
 </style>
 <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script> 
-
-</script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script type="text/javascript">
   var geocoder;
   var directionsDisplay;
@@ -58,6 +57,7 @@
       }
       routePoints.push(latLng);
       if (routePoints.length > 1){
+	firstMarker.setMap(null);
         calcRoute();
       }
     }
@@ -85,8 +85,7 @@ console.log("route points length", routePoints.length);
       if (status == google.maps.DirectionsStatus.OK) {
 	console.log("HERE", response);
         directionsDisplay.setDirections(response);
-        var route = response.routes[0];
-
+        reportRouteInfo(response.routes);
       }
     });
   }
@@ -99,17 +98,28 @@ console.log("route points length", routePoints.length);
       calcRoute();
     }
   }
+
+  function reportRouteInfo(routes){ 
+console.log("here");
+    var totalDist = 0;
+    var route = routes[0];
+    for (var i = 0; i < route.legs.length; i++) {
+      var routeSegment = i + 1;
+      totalDist += route.legs[i].distance.value;
+    }
+    $("#routeInfo").text(totalDist);
+  } 
+  
+  $(initialize)
 </script>
 </head>
-<body onload="initialize()">
+<body>
   <div id="map_canvas"></div>
   <div id="options">
-    <div id="routeInfo">
-      
-    </div>
+    <div id="routeInfo"></div>
     <input id="address" type="textbox" value="Columbia, MO">
-    <input type="button" value="Jump to address" onclick="codeAddress()">
-    <input type="button" value="Remove last point" onclick="removeLastPoint()">  
+    <input type="button" id="jump" value="Jump to address" onclick="codeAddress()">
+    <input type="button" id="remove" value="Remove last point" onclick="removeLastPoint()">  
   </div>
 </body>
 </html>
