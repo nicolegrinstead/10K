@@ -49,10 +49,12 @@
 
   function placeMarker(latLng) {
     if(mapZoom == map.getZoom()){
-      var marker = new google.maps.Marker({
-        position: latLng,
-        map: map
-      });
+      if(routePoints.length == 0){ 
+        var marker = new google.maps.Marker({
+          position: latLng,
+          map: map
+        });
+      }
       routePoints.push(latLng);
       if (routePoints.length > 1){
         calcRoute();
@@ -87,7 +89,11 @@ console.log("route points length", routePoints.length);
       }
     });
   }
-
+  
+  function removeLastPoint(){ 
+    routePoints.pop();
+    calcRoute();
+  }
 </script>
 </head>
 <body onload="initialize()">
@@ -96,6 +102,6 @@ console.log("route points length", routePoints.length);
     <input id="address" type="textbox" value="Sydney, NSW">
     <input type="button" value="Jump to address" onclick="codeAddress()">
 
-    <input type="button" value="test" onclick="calcRoute()">  </div>
+    <input type="button" value="Remove last point" onclick="removeLastPoint()">  </div>
 </body>
 </html>
