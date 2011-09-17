@@ -8,18 +8,18 @@
   #map_canvas { width:75%; height: 100%; float:left; }
   #options { width: 25%; height: 100%; float: right;}
 </style>
-<script type="text/javascript"
-    src="http://maps.googleapis.com/maps/api/js?sensor=false">
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script> 
+
 </script>
 <script type="text/javascript">
   var geocoder;
-  var map;
   var directionsDisplay;
   var directionsService = new google.maps.DirectionsService();
   var map;
   var routePoints = [];
   
   function initialize() {
+    directionsDisplay = new google.maps.DirectionsRenderer();
     geocoder = new google.maps.Geocoder();
     var latlng = new google.maps.LatLng(38, -97);
     var myOptions = {
@@ -54,8 +54,42 @@
         map: map
       });
       routePoints.push(latLng);
+      if (routePoints.length > 1){
+        calcRoute();
+      }
     }
-}
+  }
+  function calcRoute() {
+    var start = routePoints[0];  //document.getElementById("start").value;
+    var end = routePoints[1]; //document.getElementById("end").value;
+    var waypts = [];
+/*    var checkboxArray = document.getElementById("waypoints");
+    for (var i = 0; i < checkboxArray.length; i++) {
+      if (checkboxArray.options[i].selected == true) {
+        waypts.push({
+          location:checkboxArray[i].value,
+          stopover:true
+        });
+      }
+    }*/
+
+    var request = {
+        origin: start,
+        destination: end,
+        waypoints: waypts,
+        optimizeWaypoints: true,
+        travelMode: google.maps.TravelMode.WALKING
+    };
+    directionsService.route(request, function(response, status) {
+      if (status == google.maps.DirectionsStatus.OK) {
+	console.log("HERE", response);
+        directionsDisplay.setDirections(response);
+        var route = response.routes[0];
+
+      }
+    });
+  }
+
 </script>
 </head>
 <body onload="initialize()">
@@ -63,6 +97,7 @@
   <div id="options">
     <input id="address" type="textbox" value="Sydney, NSW">
     <input type="button" value="Jump to address" onclick="codeAddress()">
-  </div>
+
+    <input type="button" value="test" onclick="calcRoute()">  </div>
 </body>
 </html>
