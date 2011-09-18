@@ -17,6 +17,8 @@
   var map; 
   var firstMarker;
   var routePoints = []; // test points ["toronto, ont", "chicago, il", "winnipeg, mb", "Vancouver, BC", "Seattle, WA", "San Francisco, CA"];
+  var units = "miles";
+  var rawTotalDist;
 
   function initialize() {
     directionsDisplay = new google.maps.DirectionsRenderer();
@@ -41,6 +43,7 @@
     geocoder.geocode( { 'address': address}, function(results, status) {
       if (status == google.maps.GeocoderStatus.OK) {
         map.setCenter(results[0].geometry.location);
+	map.setZoom(15);
       } else {
         alert("Geocode was not successful for the following reason: " + status);
       }
@@ -62,6 +65,7 @@
       }
     }
   }
+
   function calcRoute() {
     var start = routePoints[0];  
     var end = routePoints[(routePoints.length - 1)]; 
@@ -91,35 +95,69 @@ console.log("route points length", routePoints.length);
   }
   
   function removeLastPoint(){ 
-    if (routePoints.length == 1){
+    routePoints.pop();
+    if (routePoints.length == 0){
       initialize();
     } else { 
-      routePoints.pop();
       calcRoute();
     }
   }
 
   function reportRouteInfo(routes){ 
-console.log("here");
     var totalDist = 0;
     var route = routes[0];
     for (var i = 0; i < route.legs.length; i++) {
       var routeSegment = i + 1;
       totalDist += route.legs[i].distance.value;
     }
-    $("#routeInfo").text(totalDist);
+    rawTotalDist = totalDist;
+    updateRouteInfoDisplay(rawTotalDist);
   } 
-  
+
+  function updateRouteInfoDisplay(rawDist){ 
+    var totalConvertedDist;
+    if (units == "miles"){ 
+      totalConvertedDist = metersToMiles(rawDist);
+    }else { 
+      totalConvertedDist = metersToKilometers(rawDist);
+    } 
+    
+    $("#routeInfo").text(totalConvertedDist + " " + units);
+  }
+
+  function metersToMiles(meters){ 
+    return meters / 1609.344; 
+  }
+
+  function metersToKilometers(meters){ 
+    return meters / 1000;
+  }  
+
+  function setUnits(bobsYourUncle){ 
+    units = bobsYourUncle;
+    if (units == 'miles'){ 
+      $("#miles").attr('disabled', true);
+      $("#kilometers").attr('disabled', false);
+    } else { 
+      $("#kilometers").attr('disabled', true);
+      $("#miles").attr('disabled', false);
+    } 
+    updateRouteInfoDisplay(rawTotalDist);
+  }
+ 
   $(initialize)
 </script>
 </head>
 <body>
   <div id="map_canvas"></div>
   <div id="options">
-    <div id="routeInfo"></div>
+    <div id="routeInfo">Distance: </div>
     <input id="address" type="textbox" value="Columbia, MO">
-    <input type="button" id="jump" value="Jump to address" onclick="codeAddress()">
-    <input type="button" id="remove" value="Remove last point" onclick="removeLastPoint()">  
+    <button type="button" id="jump" onclick="codeAddress()">Jump to address</button>
+    <button type="button" id="remove" onclick="removeLastPoint()">Remove last point</button><br />  
+    <label>Units of Distance: </label>
+    <button type="button" id="miles" onclick="setUnits('miles')">Miles</button>
+    <button type="button" id="kilometers" onclick="setUnits('kilometers')">Kilometers</button>  
   </div>
 </body>
 </html>
