@@ -12,16 +12,18 @@
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script type="text/javascript">
   var geocoder;
-  var directionsDisplay;
   var directionsService = new google.maps.DirectionsService();
   var map; 
   var firstMarker;
   var routePoints = []; // test points ["toronto, ont", "chicago, il", "winnipeg, mb", "Vancouver, BC", "Seattle, WA", "San Francisco, CA"];
   var units = "miles";
   var rawTotalDist;
+var initialLocation;
+var siberia = new google.maps.LatLng(60, 105);
+var newyork = new google.maps.LatLng(40.69847032728747, -73.9514422416687);
+var browserSupportFlag =  new Boolean();
 
   function initialize() {
-    directionsDisplay = new google.maps.DirectionsRenderer();
     geocoder = new google.maps.Geocoder();
     var latlng = new google.maps.LatLng(38, -97);
     var myOptions = {
@@ -35,7 +37,6 @@
       startLocation = event.latLng;
       placeMarker(event.latLng);
     });
-    directionsDisplay.setMap(map);
   }
 
   function codeAddress() {
@@ -66,43 +67,55 @@
     }
   }
 
-  function calcRoute() {
-    var start = routePoints[0];  
-    var end = routePoints[(routePoints.length - 1)]; 
+ function calcRoute() {
+    //split up routes
+    var routes = []; 
+      
+      for (var i = 0; i < routePoints.length; i++) { 
+        if (0 == (i % 8)){ routes.push([]); if (i>0){routes[routes.length-1].push(routePoints[i - 1])}}
+	console.log(routes, i);
+        routes[routes.length-1].push(routePoints[i]);
+      }  
+    
+console.log("route points split into: ", routes.length);
+	    
+	for (var i=0; i<routes.length; i++){
+	    drawRoute(routes[i]);
+	}
+  }
+function drawRoute(route) {
+
+    var directionsDisplay = new google.maps.DirectionsRenderer();
+    directionsDisplay.setMap(map);
     var waypts = [];
-console.log("route points length", routePoints.length);
-    for (var i = 1; i < (routePoints.length - 1); i++) {
-       console.log(routePoints[i]); 
+console.log("route points length", route.length);
+    for (var j = 1; j < route.length - 1; j++) {
+       //console.log(route[j]); 
         waypts.push({
-            location:routePoints[i],
-            stopover:true});
+            location:route[j],
+            stopover:true
+        });
     }
 
+    var start = route[0];  
+    var end = route[route.length - 1]; 
+console.log(end);
+//if (route.length == 1) return;
     var request = {
         origin: start,
         destination: end,
         waypoints: waypts,
-        optimizeWaypoints: true,
+        optimizeWaypoints: false,
         travelMode: google.maps.TravelMode.WALKING
     };
+
     directionsService.route(request, function(response, status) {
       if (status == google.maps.DirectionsStatus.OK) {
-	console.log("HERE", response);
         directionsDisplay.setDirections(response);
         reportRouteInfo(response.routes);
       }
     });
-  }
-  
-  function removeLastPoint(){ 
-    routePoints.pop();
-    if (routePoints.length == 0){
-      initialize();
-    } else { 
-      calcRoute();
-    }
-  }
-
+}
   function reportRouteInfo(routes){ 
     var totalDist = 0;
     var route = routes[0];
@@ -114,12 +127,22 @@ console.log("route points length", routePoints.length);
     updateRouteInfoDisplay(rawTotalDist);
   } 
 
+  function removeLastPoint(){ 
+    routePoints.pop();
+    if (routePoints.length == 0){
+      initialize();
+    } else { 
+      calcRoute();
+    }
+  }
+
+//FIX ME FOR MULTIPLE ROUTES!!!!!!!!!!!
   function updateRouteInfoDisplay(rawDist){ 
     var totalConvertedDist;
     if (units == "miles"){ 
-      totalConvertedDist = metersToMiles(rawDist);
+      totalConvertedDist = metersToMiles(rawDist).toFixed(2);
     }else { 
-      totalConvertedDist = metersToKilometers(rawDist);
+      totalConvertedDist = metersToKilometers(rawDist).toFixed(2);
     } 
     
     $("#routeInfo").text(totalConvertedDist + " " + units);
@@ -144,7 +167,7 @@ console.log("route points length", routePoints.length);
     } 
     updateRouteInfoDisplay(rawTotalDist);
   }
- 
+
   $(initialize)
 </script>
 </head>
@@ -154,6 +177,8 @@ console.log("route points length", routePoints.length);
     <div id="routeInfo">Distance: </div>
     <input id="address" type="textbox" value="Columbia, MO">
     <button type="button" id="jump" onclick="codeAddress()">Jump to address</button>
+    <!--<br /> OR
+    <button type="button" id="jump" onclick="findMe()">Find Me!</button><br />-->
     <button type="button" id="remove" onclick="removeLastPoint()">Remove last point</button><br />  
     <label>Units of Distance: </label>
     <button type="button" id="miles" onclick="setUnits('miles')">Miles</button>
